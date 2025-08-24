@@ -1,0 +1,141 @@
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class CustomTaskBot {
+
+    // Simple in-memory state
+    private static int leaveBalance = 5;
+    private static final List<Ticket> tickets = new ArrayList<>();
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Custom Task Bot");
+        System.out.println("----------------");
+        printHelp();
+
+        boolean running = true;
+        while (running) {
+            System.out.print("\nType a command (help to list): ");
+            String input = sc.nextLine().trim().toLowerCase(Locale.ENGLISH);
+
+            switch (input) {
+                case "1":
+                case "leave balance":
+                case "balance":
+                    System.out.println("You have " + leaveBalance + " casual leave(s) remaining.");
+                    break;
+
+                case "2":
+                case "apply leave":
+                case "apply":
+                    System.out.print("How many days of leave do you want? ");
+                    String daysStr = sc.nextLine().trim();
+                    Integer days = parseIntSafe(daysStr);
+                    if (days == null || days <= 0) {
+                        System.out.println("Invalid number of days.");
+                        break;
+                    }
+                    if (days <= leaveBalance) {
+                        leaveBalance -= days;
+                        System.out.println("Leave request applied for " + days + " day(s). Remaining balance: " + leaveBalance);
+                    } else {
+                        System.out.println("Not enough leave balance. You have only " + leaveBalance + " day(s).");
+                    }
+                    break;
+
+                case "3":
+                case "it ticket":
+                case "ticket":
+                    System.out.print("Describe your IT issue: ");
+                    String issue = sc.nextLine().trim();
+                    if (issue.isEmpty()) {
+                        System.out.println("Issue description cannot be empty.");
+                        break;
+                    }
+                    Ticket t = Ticket.create(issue);
+                    tickets.add(t);
+                    System.out.println("Ticket created. ID: " + t.id + "  Time: " + t.createdAt);
+                    break;
+
+                case "4":
+                case "company info":
+                case "info":
+                    System.out.println("Syngene example: Integrated R&D and manufacturing services company.");
+                    System.out.println("Note: This is demo data. Replace with your org's actual info or API.");
+                    break;
+
+                case "5":
+                case "list tickets":
+                case "tickets":
+                    if (tickets.isEmpty()) {
+                        System.out.println("No tickets yet.");
+                    } else {
+                        System.out.println("Your tickets:");
+                        for (Ticket tk : tickets) {
+                            System.out.println("- " + tk.id + " | " + tk.createdAt + " | " + tk.summary);
+                        }
+                    }
+                    break;
+
+                case "help":
+                case "h":
+                    printHelp();
+                    break;
+
+                case "0":
+                case "exit":
+                case "quit":
+                case "bye":
+                    System.out.println("Goodbye.");
+                    running = false;
+                    break;
+
+                default:
+                    System.out.println("Unknown command. Type 'help' to see available commands.");
+            }
+        }
+        sc.close();
+    }
+
+    private static void printHelp() {
+        System.out.println("Commands:");
+        System.out.println("  1 or 'leave balance'    -> Show leave balance");
+        System.out.println("  2 or 'apply leave'      -> Apply for leave");
+        System.out.println("  3 or 'it ticket'        -> Create an IT ticket");
+        System.out.println("  4 or 'company info'     -> Show company info (demo)");
+        System.out.println("  5 or 'list tickets'     -> List created tickets");
+        System.out.println("  0 or 'exit'             -> Quit");
+    }
+
+    private static Integer parseIntSafe(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    // Simple ticket model
+    private static class Ticket {
+        private static int seq = 1;
+        final String id;
+        final String summary;
+        final String createdAt;
+
+        private Ticket(String id, String summary, String createdAt) {
+            this.id = id;
+            this.summary = summary;
+            this.createdAt = createdAt;
+        }
+
+        static Ticket create(String summary) {
+            String id = String.format("TKT-%04d", seq++);
+            String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            return new Ticket(id, summary, ts);
+        }
+    }
+}
